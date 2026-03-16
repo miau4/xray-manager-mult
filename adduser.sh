@@ -1,19 +1,25 @@
 #!/bin/bash
 
-read -p "Nome: " user
+read -p "Nome do usuario: " user
 
 UUID=$(uuidgen)
 
 IP=$(curl -s ifconfig.me)
 
-jq --arg id "$UUID" '.inbounds[0].settings.clients += [{"id":$id}]' /etc/xray/config.json > /tmp/config.json
+CONFIG="/etc/xray/config.json"
 
-mv /tmp/config.json /etc/xray/config.json
+jq --arg id "$UUID" '.inbounds[0].settings.clients += [{"id":$id}]' $CONFIG > /tmp/config.json
+mv /tmp/config.json $CONFIG
+
+echo "$user:$UUID" >> /etc/xray-manager/users.db
 
 systemctl restart xray
 
 echo ""
 echo "Usuario criado"
+echo ""
+
+echo "LINK:"
 echo ""
 
 echo "vless://$UUID@$IP:443?security=reality&type=tcp&sni=www.cloudflare.com&flow=xtls-rprx-vision#$user"
