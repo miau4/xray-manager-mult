@@ -49,6 +49,7 @@ echo "5 • Definir expiração"
 echo "6 • Backup"
 echo "7 • Rebuild config"
 echo "8 • Verificar JSON"
+echo "9 • Atualizar script"
 echo "0 • Sair"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -87,6 +88,10 @@ rebuild
 
 8)
 checkjson
+;;
+
+9)
+update-xray
 ;;
 
 0)
