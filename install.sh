@@ -1,9 +1,10 @@
 #!/bin/bash
+set -e
 
 echo "Instalando XRAY MANAGER..."
 
 apt update -y
-apt install curl jq uuid-runtime -y
+apt install -y curl jq uuid-runtime badvpn ufw
 
 mkdir -p /etc/xray
 mkdir -p /etc/xray-manager
@@ -16,10 +17,30 @@ KEYS=$(xray x25519)
 PRIVATE=$(echo "$KEYS" | grep Private | awk '{print $3}')
 PUBLIC=$(echo "$KEYS" | grep Public | awk '{print $3}')
 
-mkdir -p /etc/xray-manager
-
 echo "PRIVATE=$PRIVATE" > /etc/xray-manager/reality.key
 echo "PUBLIC=$PUBLIC" >> /etc/xray-manager/reality.key
+
+echo "Configurando BadVPN..."
+
+cat > /etc/systemd/system/badvpn.service <<EOF
+[Unit]
+Description=BadVPN UDPGW Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/badvpn-udpgw --listen-addr 0.0.0.0:7300
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable badvpn
+systemctl start badvpn
+
+echo "Criando config do Xray..."
 
 cat > /etc/xray/config.json <<EOF
 {
@@ -105,6 +126,8 @@ cat > /etc/xray/config.json <<EOF
 }
 EOF
 
+echo "Baixando scripts..."
+
 curl -o /usr/local/bin/menu https://raw.githubusercontent.com/miau4/xray-manager-mult/main/menu.sh
 curl -o /usr/local/bin/adduser https://raw.githubusercontent.com/miau4/xray-manager-mult/main/adduser.sh
 curl -o /usr/local/bin/deluser https://raw.githubusercontent.com/miau4/xray-manager-mult/main/deluser.sh
@@ -119,27 +142,26 @@ curl -o /usr/local/bin/expire-check https://raw.githubusercontent.com/miau4/xray
 curl -o /usr/local/bin/update-xray https://raw.githubusercontent.com/miau4/xray-manager-mult/main/update.sh
 curl -o /usr/local/bin/slowdns https://raw.githubusercontent.com/miau4/xray-manager-mult/main/slowdns.sh
 
-chmod +x /usr/local/bin/menu
-chmod +x /usr/local/bin/adduser
-chmod +x /usr/local/bin/deluser
-chmod +x /usr/local/bin/online
-chmod +x /usr/local/bin/rebuild
-chmod +x /usr/local/bin/limit
-chmod +x /usr/local/bin/expire
-chmod +x /usr/local/bin/backup
-chmod +x /usr/local/bin/checkjson
-chmod +x /usr/local/bin/limit-monitor
-chmod +x /usr/local/bin/expire-check
 chmod +x /usr/local/bin/*
-chmod +x /usr/local/bin/update-xray
-chmod +x /usr/local/bin/slowdns
 
-systemctl restart xray
-
-echo ""
-echo "Instalado."
-echo "Digite: menu"
+echo "Configurando tarefas automáticas..."
 
 (crontab -l 2>/dev/null; echo "0 3 * * * expire") | crontab -
 (crontab -l 2>/dev/null; echo "* * * * * limit-monitor") | crontab -
 (crontab -l 2>/dev/null; echo "0 3 * * * expire-check") | crontab -
+
+echo "Abrindo portas..."
+
+ufw allow 53
+ufw allow 5300
+ufw allow 7300
+ufw allow 80
+ufw allow 443
+ufw allow 8080
+ufw allow 8880
+
+systemctl restart xray
+
+echo ""
+echo "INSTALAÇÃO CONCLUÍDA"
+echo "Digite: menu"
