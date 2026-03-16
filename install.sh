@@ -114,9 +114,10 @@ curl -o /usr/local/bin/limit https://raw.githubusercontent.com/miau4/xray-manage
 curl -o /usr/local/bin/expire https://raw.githubusercontent.com/miau4/xray-manager-mult/main/expire.sh
 curl -o /usr/local/bin/backup https://raw.githubusercontent.com/miau4/xray-manager-mult/main/backup.sh
 curl -o /usr/local/bin/checkjson https://raw.githubusercontent.com/miau4/xray-manager-mult/main/checkjson.sh
-curl -o /usr/local/bin/limit-monitor https://raw.githubusercontent.com/SEUUSUARIO/xray-manager-mult/main/limit-monitor.sh
-curl -o /usr/local/bin/expire-check https://raw.githubusercontent.com/SEUUSUARIO/xray-manager-mult/main/expire-check.sh
-curl -o /usr/local/bin/update-xray https://raw.githubusercontent.com/SEUUSUARIO/xray-manager-mult/main/update.sh
+curl -o /usr/local/bin/limit-monitor https://raw.githubusercontent.com/miau4/xray-manager-mult/main/limit-monitor.sh
+curl -o /usr/local/bin/expire-check https://raw.githubusercontent.com/miau4/xray-manager-mult/main/expire-check.sh
+curl -o /usr/local/bin/update-xray https://raw.githubusercontent.com/miau4/xray-manager-mult/main/update.sh
+curl -o /usr/local/bin/slowdns https://raw.githubusercontent.com/miau4/xray-manager-mult/main/slowdns.sh
 
 chmod +x /usr/local/bin/menu
 chmod +x /usr/local/bin/adduser
@@ -131,6 +132,7 @@ chmod +x /usr/local/bin/limit-monitor
 chmod +x /usr/local/bin/expire-check
 chmod +x /usr/local/bin/*
 chmod +x /usr/local/bin/update-xray
+chmod +x /usr/local/bin/slowdns
 
 systemctl restart xray
 
