@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH=$PATH:/usr/local/bin
+
 CONFIG="/etc/xray/config.json"
 USERDB="/etc/xray-manager/users.db"
 LOG="/var/log/xray/access.log"
@@ -19,7 +21,6 @@ RAM=$(free -m | awk '/Mem:/ {print $3"MB / "$2"MB"}')
 UPTIME=$(uptime -p)
 
 TOTAL_USERS=$(cat $USERDB 2>/dev/null | wc -l)
-
 ONLINE_USERS=$(grep accepted $LOG 2>/dev/null | wc -l)
 
 XRAY_STATUS=$(systemctl is-active xray 2>/dev/null)
@@ -91,55 +92,55 @@ read -p "Escolha: " op
 case $op in
 
 1)
-adduser
+/usr/local/bin/adduser
 ;;
 
 2)
-deluser
+/usr/local/bin/deluser
 ;;
 
 3)
-online
+/usr/local/bin/online
 ;;
 
 4)
-limit
+/usr/local/bin/limit
 ;;
 
 5)
-expire
+/usr/local/bin/expire
 ;;
 
 6)
-backup
+/usr/local/bin/backup
 ;;
 
 7)
-rebuild
+/usr/local/bin/rebuild
 ;;
 
 8)
-checkjson
+/usr/local/bin/checkjson
 ;;
 
 9)
-speedtest
+/usr/local/bin/speedtest
 ;;
 
 10)
-ssh-manager
+/usr/local/bin/ssh-manager
 ;;
 
 11)
-slowdns
+/usr/local/bin/slowdns
 ;;
 
 12)
-update-xray
+/usr/local/bin/update-xray
 ;;
 
 13)
-uninstall-xray
+/usr/local/bin/uninstall-xray
 ;;
 
 0)
@@ -147,7 +148,12 @@ exit
 ;;
 
 *)
-menu
+echo "Opção inválida"
 ;;
 
 esac
+
+echo ""
+read -p "Pressione ENTER para voltar ao menu"
+
+menu
