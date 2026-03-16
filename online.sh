@@ -1,6 +1,5 @@
-
 #!/bin/bash
 
-echo "Usuarios conectados:"
+echo "Usuarios conectados"
 
-grep tcp /var/log/xray/access.log | awk '{print $3}' | sort | uniq
+grep accepted /var/log/xray/access.log | awk '{print $3}' | sort | uniq -c
