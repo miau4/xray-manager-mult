@@ -63,6 +63,7 @@ curl -o /usr/local/bin/limit https://raw.githubusercontent.com/miau4/xray-manage
 curl -o /usr/local/bin/expire https://raw.githubusercontent.com/miau4/xray-manager-mult/main/expire.sh
 curl -o /usr/local/bin/backup https://raw.githubusercontent.com/miau4/xray-manager-mult/main/backup.sh
 curl -o /usr/local/bin/checkjson https://raw.githubusercontent.com/miau4/xray-manager-mult/main/checkjson.sh
+curl -o /usr/local/bin/limit-monitor https://raw.githubusercontent.com/SEUUSUARIO/xray-manager-mult/main/limit-monitor.sh
 
 chmod +x /usr/local/bin/menu
 chmod +x /usr/local/bin/adduser
@@ -73,6 +74,7 @@ chmod +x /usr/local/bin/limit
 chmod +x /usr/local/bin/expire
 chmod +x /usr/local/bin/backup
 chmod +x /usr/local/bin/checkjson
+chmod +x /usr/local/bin/limit-monitor
 
 systemctl restart xray
 
@@ -81,3 +83,4 @@ echo "Instalado."
 echo "Digite: menu"
 
 (crontab -l 2>/dev/null; echo "0 3 * * * expire") | crontab -
+(crontab -l 2>/dev/null; echo "* * * * * limit-monitor") | crontab -
