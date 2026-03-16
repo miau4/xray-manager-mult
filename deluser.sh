@@ -24,12 +24,14 @@ if [ -z "$usuario" ]; then
     exit 1
 fi
 
+# Capturar UUID antes de remover
+uuid=$(grep "^$usuario:" $USERS | cut -d: -f3)
+
 # Remover do arquivo de usuários
 grep -v "^$usuario:" $USERS > /tmp/users.tmp
 mv /tmp/users.tmp $USERS
 
 # Remover dos inbounds
-uuid=$(grep "^$usuario:" $USERS | cut -d: -f3)
 jq "(.inbounds[].settings.clients) |= map(select(.id != \"$uuid\"))" $CONFIG > /tmp/config.json
 mv /tmp/config.json $CONFIG
 
