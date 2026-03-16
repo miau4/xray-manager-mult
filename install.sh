@@ -59,15 +59,25 @@ curl -o /usr/local/bin/adduser https://raw.githubusercontent.com/miau4/xray-mana
 curl -o /usr/local/bin/deluser https://raw.githubusercontent.com/miau4/xray-manager-mult/main/deluser.sh
 curl -o /usr/local/bin/online https://raw.githubusercontent.com/miau4/xray-manager-mult/main/online.sh
 curl -o /usr/local/bin/rebuild https://raw.githubusercontent.com/miau4/xray-manager-mult/main/rebuild.sh
+curl -o /usr/local/bin/limit https://raw.githubusercontent.com/miau4/xray-manager-mult/main/limit.sh
+curl -o /usr/local/bin/expire https://raw.githubusercontent.com/miau4/xray-manager-mult/main/expire.sh
+curl -o /usr/local/bin/backup https://raw.githubusercontent.com/miau4/xray-manager-mult/main/backup.sh
+curl -o /usr/local/bin/checkjson https://raw.githubusercontent.com/miau4/xray-manager-mult/main/checkjson.sh
 
 chmod +x /usr/local/bin/menu
 chmod +x /usr/local/bin/adduser
 chmod +x /usr/local/bin/deluser
 chmod +x /usr/local/bin/online
 chmod +x /usr/local/bin/rebuild
+chmod +x /usr/local/bin/limit
+chmod +x /usr/local/bin/expire
+chmod +x /usr/local/bin/backup
+chmod +x /usr/local/bin/checkjson
 
 systemctl restart xray
 
 echo ""
 echo "Instalado."
 echo "Digite: menu"
+
+(crontab -l 2>/dev/null; echo "0 3 * * * expire") | crontab -
