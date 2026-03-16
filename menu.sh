@@ -51,6 +51,7 @@ echo "6 • Backup"
 echo "7 • Rebuild config"
 echo "8 • Verificar JSON"
 echo "9 • Atualizar script"
+echo "10 • Gerenciador SlowDNS"
 echo "0 • Sair"
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -93,6 +94,10 @@ checkjson
 
 9)
 update-xray
+;;
+
+10)
+slowdns
 ;;
 
 0)
