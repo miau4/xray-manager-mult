@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Instalando XRAY MANAGER..."
+clear
+
+echo "================================="
+echo "     INSTALANDO PAINEL NETSIMON"
+echo "================================="
 
 apt update -y
 apt install -y curl jq uuid-runtime ufw
@@ -103,9 +107,9 @@ cat > /etc/xray/config.json <<EOF
 "network": "tcp",
 "security": "reality",
 "realitySettings": {
-"dest": "[www.cloudflare.com:443](http://www.cloudflare.com:443)",
+"dest": "www.cloudflare.com:443",
 "serverNames": [
-"[www.cloudflare.com](http://www.cloudflare.com)"
+"www.cloudflare.com"
 ],
 "privateKey": "$PRIVATE",
 "shortIds": [
@@ -177,7 +181,8 @@ cat > /etc/xray/config.json <<EOF
 }
 EOF
 
-echo "Baixando scripts..."
+
+echo "Baixando scripts do painel..."
 
 curl -o /usr/local/bin/menu https://raw.githubusercontent.com/miau4/xray-manager-mult/main/menu.sh
 curl -o /usr/local/bin/adduser https://raw.githubusercontent.com/miau4/xray-manager-mult/main/adduser.sh
@@ -190,13 +195,26 @@ curl -o /usr/local/bin/backup https://raw.githubusercontent.com/miau4/xray-manag
 curl -o /usr/local/bin/checkjson https://raw.githubusercontent.com/miau4/xray-manager-mult/main/checkjson.sh
 curl -o /usr/local/bin/limit-monitor https://raw.githubusercontent.com/miau4/xray-manager-mult/main/limit-monitor.sh
 curl -o /usr/local/bin/expire-check https://raw.githubusercontent.com/miau4/xray-manager-mult/main/expire-check.sh
-curl -o /usr/local/bin/update-xray https://raw.githubusercontent.com/miau4/xray-manager-mult/main/update.sh
 curl -o /usr/local/bin/slowdns https://raw.githubusercontent.com/miau4/xray-manager-mult/main/slowdns.sh
 curl -o /usr/local/bin/speedtest https://raw.githubusercontent.com/miau4/xray-manager-mult/main/speedtest.sh
 curl -o /usr/local/bin/ssh-manager https://raw.githubusercontent.com/miau4/xray-manager-mult/main/ssh-manager.sh
 curl -o /usr/local/bin/uninstall-xray https://raw.githubusercontent.com/miau4/xray-manager-mult/main/uninstall.sh
 
-chmod +x /usr/local/bin/*
+chmod +x /usr/local/bin/menu
+chmod +x /usr/local/bin/adduser
+chmod +x /usr/local/bin/deluser
+chmod +x /usr/local/bin/online
+chmod +x /usr/local/bin/rebuild
+chmod +x /usr/local/bin/limit
+chmod +x /usr/local/bin/expire
+chmod +x /usr/local/bin/backup
+chmod +x /usr/local/bin/checkjson
+chmod +x /usr/local/bin/limit-monitor
+chmod +x /usr/local/bin/expire-check
+chmod +x /usr/local/bin/slowdns
+chmod +x /usr/local/bin/speedtest
+chmod +x /usr/local/bin/ssh-manager
+chmod +x /usr/local/bin/uninstall-xray
 
 echo "Configurando tarefas automáticas..."
 
@@ -215,6 +233,13 @@ ufw allow 8880
 systemctl restart xray
 systemctl enable xray
 
+clear
+
+echo "================================="
+echo " INSTALAÇÃO CONCLUÍDA"
+echo "================================="
 echo ""
-echo "INSTALAÇÃO CONCLUÍDA"
-echo "Digite: menu"
+echo "Digite no terminal:"
+echo ""
+echo "menu"
+echo ""
