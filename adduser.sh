@@ -5,20 +5,18 @@ CONFIG="/etc/xray/config.json"
 
 clear
 echo "══════════════════════════════"
-echo "     ➕ CRIAR USUÁRIO"
+echo "     ➕ CRIAR USUÁRIO PRO"
 echo "══════════════════════════════"
 
 # ----------------- INPUT -----------------
 read -p "Nome do usuário: " user
 
-# valida nome
-if [[ -z "$user" ]]; then
-    echo "Nome inválido!"
+if [[ -z "$user" || "$user" =~ [^a-zA-Z0-9_] ]]; then
+    echo "Nome inválido! (use apenas letras/números)"
     sleep 2
     exit
 fi
 
-# verifica duplicado
 if grep -q "^$user|" "$USERS" 2>/dev/null; then
     echo "Usuário já existe!"
     sleep 2
@@ -26,22 +24,23 @@ if grep -q "^$user|" "$USERS" 2>/dev/null; then
 fi
 
 read -p "Senha: " pass
-
-if [[ -z "$pass" ]]; then
-    echo "Senha inválida!"
-    sleep 2
-    exit
-fi
+[ -z "$pass" ] && echo "Senha inválida!" && sleep 2 && exit
 
 read -p "Dias de validade: " dias
+[[ ! "$dias" =~ ^[0-9]+$ ]] && echo "Valor inválido!" && sleep 2 && exit
 
-if ! [[ "$dias" =~ ^[0-9]+$ ]]; then
-    echo "Valor inválido!"
-    sleep 2
-    exit
-fi
+# 🔐 NOVO: limite de conexões
+read -p "Limite de IPs simultâneos (ex: 1,2,3): " limit
+[[ ! "$limit" =~ ^[0-9]+$ ]] && limit=1
 
-# ----------------- GERAR DADOS -----------------
+# 🕒 NOVO: horário permitido
+read -p "Hora início (0-23): " h_start
+read -p "Hora fim (0-23): " h_end
+
+[[ ! "$h_start" =~ ^[0-9]+$ ]] && h_start=0
+[[ ! "$h_end" =~ ^[0-9]+$ ]] && h_end=23
+
+# ----------------- GERAR -----------------
 uuid=$(uuidgen)
 exp_date=$(date -d "+$dias days" +"%Y-%m-%d")
 
@@ -50,22 +49,27 @@ clear
 echo "════════ CONFIRMAÇÃO ════════"
 echo "Usuário : $user"
 echo "Senha   : $pass"
+echo "UUID    : $uuid"
 echo "Validade: $exp_date"
+echo "Limite  : $limit IP(s)"
+echo "Horário : $h_start → $h_end"
 echo "═════════════════════════════"
 read -p "Confirmar? (s/n): " confirm
 
 [[ "$confirm" != "s" && "$confirm" != "S" ]] && exit
 
-# ----------------- SALVAR USUÁRIO -----------------
+# ----------------- SALVAR -----------------
 mkdir -p /etc/xray-manager
-echo "$user|$uuid|$exp_date|$pass" >> $USERS
 
-# ----------------- ADICIONAR NO XRAY -----------------
+# novo formato com limite + horário
+echo "$user|$uuid|$exp_date|$pass|$limit|$h_start|$h_end" >> $USERS
+
+# ----------------- XRAY CONFIG -----------------
 if [ -f "$CONFIG" ]; then
     tmp=$(mktemp)
 
     jq --arg uuid "$uuid" --arg user "$user" '
-    (.inbounds[] | select(.tag=="vless-tls" or .tag=="vless-ws") | .settings.clients) += [{
+    (.inbounds[] | select(.protocol=="vless" or .protocol=="vmess") | .settings.clients) += [{
         "id": $uuid,
         "email": $user
     }]
@@ -77,12 +81,14 @@ fi
 # ----------------- RESULTADO -----------------
 clear
 echo "══════════════════════════════"
-echo "     ✅ USUÁRIO CRIADO"
+echo "     ✅ USUÁRIO CRIADO PRO"
 echo "══════════════════════════════"
 echo "Usuário : $user"
 echo "Senha   : $pass"
 echo "UUID    : $uuid"
 echo "Expira  : $exp_date"
+echo "Limite  : $limit IP(s)"
+echo "Horário : $h_start → $h_end"
 echo "══════════════════════════════"
 
 read -n1 -r -p "Pressione qualquer tecla..."
