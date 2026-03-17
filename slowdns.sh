@@ -1,64 +1,33 @@
 #!/bin/bash
+# Menu SlowDNS Manager integrado ao Xray-Manager-Mult
 clear
+SLOWDNS_DIR="/etc/slowdns"
 
-# ----------------- CORES -----------------
-RED='\033[1;31m'
-GREEN='\033[1;32m'
-CYAN='\033[1;36m'
-LILAC='\033[1;35m'
-NC='\033[0m'
+slowdns_menu() {
+    clear
+    echo -e "\033[1;31m════════════════════════════════════════════════════\033[0m"
+    tput setaf 7 ; tput setab 4 ; tput bold ; printf '%40s%s%-12s\n' "MENU SLOWDNS MANAGER INTEGRADO" ; tput sgr0
+    echo -e "\033[1;31m════════════════════════════════════════════════════\033[0m"
+    echo ""
+    echo -e "\033[0;36m[01]\033[m | Instalar SlowDNS"
+    echo -e "\033[0;36m[02]\033[m | Informações do serviço"
+    echo -e "\033[0;36m[03]\033[m | Iniciar SlowDNS"
+    echo -e "\033[0;36m[04]\033[m | Parar SlowDNS"
+    echo -e "\033[0;36m[05]\033[m | Reiniciar SlowDNS"
+    echo -e "\033[0;36m[06]\033[m | Remover SlowDNS"
+    echo -e "\033[0;36m[00]\033[m | Voltar ao menu principal"
+    echo ""
+    echo -ne "\033[0;36mEscolha: \033[0m" && read opcao
 
-# ----------------- CONFIG -----------------
-CONFIG="/etc/xray-manager/slowdns.conf"
-
-# ----------------- FUNÇÕES -----------------
-menu_slowdns() {
-    while true; do
-        clear
-        echo -e "${LILAC}╔════════════════════════════╗${NC}"
-        echo -e "${CYAN}      █ S L O W D N S █       ${NC}"
-        echo -e "${LILAC}╠════════════════════════════╣${NC}"
-        echo -e "${LILAC}1) Instalar SlowDNS${NC}"
-        echo -e "${LILAC}2) Reiniciar SlowDNS${NC}"
-        echo -e "${LILAC}3) Parar SlowDNS${NC}"
-        echo -e "${LILAC}4) Status SlowDNS${NC}"
-        echo -e "${LILAC}0) Voltar${NC}"
-        echo -e "${LILAC}╚════════════════════════════╝${NC}"
-        read -p "Escolha: " sd
-        case $sd in
-            1)
-                bash <(curl -Ls https://raw.githubusercontent.com/miau4/xray-manager-mult/main/install-slowdns.sh)
-                sleep 2
-                ;;
-            2)
-                systemctl restart slowdns >/dev/null 2>&1
-                echo -e "${GREEN}SlowDNS reiniciado com sucesso${NC}"
-                sleep 2
-                ;;
-            3)
-                systemctl stop slowdns >/dev/null 2>&1
-                echo -e "${RED}SlowDNS parado${NC}"
-                sleep 2
-                ;;
-            4)
-                status=$(systemctl is-active slowdns)
-                if [ "$status" = "active" ]; then
-                    echo -e "${GREEN}SlowDNS ATIVO${NC}"
-                else
-                    echo -e "${RED}SlowDNS INATIVO${NC}"
-                fi
-                sleep 2
-                ;;
-            0)
-                break
-                ;;
-            *)
-                echo -e "${RED}Opção inválida!${NC}"
-                sleep 1
-                ;;
-        esac
-    done
+    case $opcao in
+        1) bash $SLOWDNS_DIR/install ;;
+        2) bash $SLOWDNS_DIR/slowdns-info ;;
+        3) bash $SLOWDNS_DIR/startdns ;;
+        4) bash $SLOWDNS_DIR/stopdns ;;
+        5) bash $SLOWDNS_DIR/restartdns ;;
+        6) bash $SLOWDNS_DIR/remove-slow ;;
+        0) exit 0 ;;
+        *) echo -e "\033[1;31mOpção inválida!\033[0m"; sleep 1; slowdns_menu ;;
+    esac
 }
-
-# ----------------- INICIAR MENU -----------------
-menu_slowdns
+slowdns_menu
