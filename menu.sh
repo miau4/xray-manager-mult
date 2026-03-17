@@ -35,7 +35,7 @@ port_service() {
         slowdns)
             echo "5300"
             ;;
-        *)
+        * )
             echo "-"
             ;;
     esac
@@ -45,17 +45,17 @@ port_service() {
 main_menu() {
     clear
     echo -e "${LILAC}╔══════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}   █ P A I N E L  X R A Y - NETSIMON █   ${NC}"
+    echo -e "${CYAN}   █ P A I N E L  N E T S I M O N █   ${NC}"
     echo -e "${LILAC}╠══════════════════════════════════════╣${NC}"
     echo -e "${LILAC}1) Gerenciar Usuários${NC}"
-    echo -e "${LILAC}2) Gerenciar Xray${NC}"
+    echo -e "${LILAC}2) CONEXOES${NC}"
     echo -e "${LILAC}3) Info dos Serviços${NC}"
     echo -e "${LILAC}0) Sair${NC}"
     echo -e "${LILAC}╚══════════════════════════════════════╝${NC}"
     read -p "Escolha uma opção: " opt
     case $opt in
         1) users_menu ;;
-        2) xray_menu ;;
+        2) conexoes_menu ;;
         3) info_servicos ;;
         0) exit 0 ;;
         *) echo "Opção inválida"; sleep 1; main_menu ;;
@@ -71,75 +71,106 @@ users_menu() {
         echo -e "${LILAC}╠════════════════════════════════╣${NC}"
         echo -e "${LILAC}1) Adicionar usuário${NC}"
         echo -e "${LILAC}2) Remover usuário${NC}"
-        echo -e "${LILAC}3) Ver tempo conectado${NC}"
+        echo -e "${LILAC}3) Lista de usuários${NC}"
+        echo -e "${LILAC}4) Usuários expirados${NC}"
         echo -e "${LILAC}0) Voltar${NC}"
         echo -e "${LILAC}╚════════════════════════════════╝${NC}"
         read -p "Escolha: " gu
         case $gu in
             1) adduser ;;
             2) deluser ;;
-            3)
-                if [ -f "$USERS" ]; then
-                    echo -e "${CYAN}Tempo conectado por usuário:${NC}"
-                    awk '{print $3}' /var/log/xray/access.log | sort | uniq -c
-                else
-                    echo "Nenhum usuário cadastrado."
-                fi
-                read -p "ENTER para voltar..."
-                ;;
+            3) listar_usuarios ;;
+            4) usuarios_expirados ;;
             0) break ;;
             *) echo -e "${RED}Opção inválida!${NC}" ; sleep 1 ;;
         esac
     done
 }
 
-# ----------------- GERENCIAR XRAY -----------------
-xray_menu() {
+listar_usuarios() {
+    clear
+    echo -e "${CYAN}USUÁRIOS ATIVOS${NC}"
+    echo "-------------------------"
+    [ -f "$USERS" ] && cat $USERS || echo "Nenhum usuário cadastrado."
+    read -n1 -r -p "Pressione qualquer tecla para voltar..."
+}
+
+usuarios_expirados() {
+    clear
+    echo -e "${CYAN}USUÁRIOS EXPIRADOS${NC}"
+    echo "-------------------------"
+    [ -f "$USERS" ] || { echo "Nenhum usuário cadastrado."; read -n1 -r -p "Pressione qualquer tecla para voltar..."; return; }
+    date_now=$(date +%s)
+    while IFS="|" read -r user uuid exp; do
+        exp_ts=$(date -d "$exp" +%s 2>/dev/null || echo 0)
+        if [ "$exp_ts" -lt "$date_now" ] && [ "$exp_ts" -ne 0 ]; then
+            echo "$user expirado em $exp"
+        fi
+    done < $USERS
+    read -n1 -r -p "Pressione qualquer tecla para voltar..."
+}
+
+# ----------------- CONEXOES -----------------
+conexoes_menu() {
     while true; do
         clear
         echo -e "${LILAC}╔════════════════════════════════╗${NC}"
-        echo -e "${CYAN}   █ G E R E N C I A R  X R A Y █  ${NC}"
+        echo -e "${CYAN}       █ C O N E X Õ E S █       ${NC}"
         echo -e "${LILAC}╠════════════════════════════════╣${NC}"
-        echo -e "${LILAC}1) Alterar porta xHTTP TLS${NC}"
-        echo -e "${LILAC}2) Alterar porta Reality${NC}"
-        echo -e "${LILAC}3) Alterar SNI${NC}"
-        echo -e "${LILAC}4) Reiniciar Xray${NC}"
+        echo -e "${LILAC}1) Reiniciar Xray${NC}"
+        echo -e "${LILAC}2) Alterar porta XHTTP TLS${NC}"
+        echo -e "${LILAC}3) Alterar porta Reality${NC}"
+        echo -e "${LILAC}4) Alterar SNI Reality${NC}"
+        echo -e "${LILAC}5) Gerenciar SSH${NC}"
+        echo -e "${LILAC}6) Gerenciar WebSocket${NC}"
         echo -e "${LILAC}0) Voltar${NC}"
         echo -e "${LILAC}╚════════════════════════════════╝${NC}"
         read -p "Escolha: " gx
         case $gx in
             1)
-                read -p "Nova porta xHTTP TLS: " nova_porta
-                jq ".inbounds[1].port=$nova_porta" $CONFIG > /tmp/config.json
-                mv /tmp/config.json $CONFIG
-                systemctl restart xray
-                echo "Porta xHTTP alterada para $nova_porta"
-                read -p "ENTER para voltar..."
+                systemctl restart xray >/dev/null 2>&1
+                echo -e "${GREEN}Xray reiniciado com sucesso${NC}"
+                sleep 2
                 ;;
             2)
+                read -p "Nova porta XHTTP TLS: " nova_porta
+                jq ".inbounds[1].port=$nova_porta" $CONFIG > /tmp/config.json
+                mv /tmp/config.json $CONFIG
+                systemctl restart xray >/dev/null 2>&1
+                echo -e "${GREEN}Porta XHTTP TLS alterada para $nova_porta${NC}"
+                sleep 2
+                ;;
+            3)
                 read -p "Nova porta Reality: " nova_porta
                 jq ".inbounds[2].port=$nova_porta" $CONFIG > /tmp/config.json
                 mv /tmp/config.json $CONFIG
-                systemctl restart xray
-                echo "Porta Reality alterada para $nova_porta"
-                read -p "ENTER para voltar..."
+                systemctl restart xray >/dev/null 2>&1
+                echo -e "${GREEN}Porta Reality alterada para $nova_porta${NC}"
+                sleep 2
                 ;;
-            3)
-                read -p "Novo SNI: " novo_sni
+            4)
+                read -p "Novo SNI Reality: " novo_sni
                 jq ".inbounds[2].streamSettings.realitySettings.dest=\"$novo_sni\"" $CONFIG > /tmp/config.json
                 jq ".inbounds[2].streamSettings.realitySettings.serverNames[0]=\"$novo_sni\"" /tmp/config.json > /tmp/config2.json
                 mv /tmp/config2.json $CONFIG
-                systemctl restart xray
-                echo "SNI alterado para $novo_sni"
-                read -p "ENTER para voltar..."
+                systemctl restart xray >/dev/null 2>&1
+                echo -e "${GREEN}SNI alterado para $novo_sni${NC}"
+                sleep 2
                 ;;
-            4)
-                systemctl restart xray
-                echo "Xray reiniciado!"
-                read -p "ENTER para voltar..."
+            5)
+                nano /etc/ssh/sshd_config
+                systemctl restart ssh
                 ;;
-            0) break ;;
-            *) echo -e "${RED}Opção inválida!${NC}" ; sleep 1 ;;
+            6)
+                nano $CONFIG
+                systemctl restart xray >/dev/null 2>&1
+                ;;
+            0)
+                break
+                ;;
+            *)
+                echo -e "${RED}Opção inválida!${NC}" ; sleep 1
+                ;;
         esac
     done
 }
@@ -153,8 +184,7 @@ info_servicos() {
     for svc in xray ssh slowdns; do
         echo -e "${LILAC}$svc - Status: $(status_service $svc) - Portas: $(port_service $svc)${NC}"
     done
-    echo -e "${LILAC}╚════════════════════════════════╝${NC}"
-    read -p "Pressione ENTER para voltar..."
+    read -n1 -r -p "Pressione qualquer tecla para voltar..."
 }
 
 # ----------------- AUTO MENU AO LOGIN -----------------
