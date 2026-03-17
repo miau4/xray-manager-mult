@@ -11,39 +11,19 @@ NC='\033[0m'
 
 CONFIG="/etc/xray/config.json"
 USERS="/etc/xray-manager/users.xray"
-
-# ----------------- ANIMAÇÃO -----------------
-loading() {
-    echo -ne "${CYAN}Carregando"
-    for i in {1..3}; do
-        echo -ne "."
-        sleep 0.3
-    done
-    echo -e "${NC}"
-}
-
-# ----------------- PORTA EM USO -----------------
-check_port() {
-    porta=$1
-    if lsof -i:$porta >/dev/null 2>&1; then
-        proc=$(lsof -i:$porta | awk 'NR==2 {print $1}')
-        echo -e "${RED}Porta $porta já está em uso pelo processo: $proc${NC}"
-        return 1
-    fi
-    return 0
-}
+API="/etc/xray-manager/api.sh"
 
 # ----------------- MENU PRINCIPAL -----------------
 main_menu() {
     while true; do
         clear
         echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}        ⚡ PAINEL NETSIMON ⚡               ${NC}"
+        echo -e "${CYAN}        ⚡ NETSIMON MANAGER ⚡              ${NC}"
         echo -e "${BLUE}╠════════════════════════════════════════════╣${NC}"
-        echo -e "${GREEN} 1) Gerenciar Usuários${NC}"
+        echo -e "${GREEN} 1) Usuários${NC}"
         echo -e "${GREEN} 2) Conexões${NC}"
-        echo -e "${GREEN} 3) Info Serviços${NC}"
-        echo -e "${GREEN} 4) Monitor${NC}"
+        echo -e "${GREEN} 3) Monitor Online${NC}"
+        echo -e "${GREEN} 4) API (info)${NC}"
         echo -e "${RED} 0) Sair${NC}"
         echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
         read -p "Escolha: " opt
@@ -51,8 +31,8 @@ main_menu() {
         case $opt in
             1) users_menu ;;
             2) conexoes_menu ;;
-            3) info_servicos ;;
-            4) bash /etc/xray-manager/monitor.sh ;;
+            3) monitor_online ;;
+            4) api_menu ;;
             0) exit ;;
             *) echo "Inválido"; sleep 1 ;;
         esac
@@ -67,12 +47,11 @@ users_menu() {
         echo "1) Adicionar"
         echo "2) Remover"
         echo "3) Listar"
-        echo "4) Monitor"
         echo "0) Voltar"
         read -p "Escolha: " op
 
         case $op in
-            1) echo "Função adicionar aqui"; sleep 2 ;;
+            1) adduser ;;
             2) deluser ;;
             3) listar_usuarios ;;
             0) break ;;
@@ -82,38 +61,45 @@ users_menu() {
 
 listar_usuarios() {
     clear
-    echo "USUÁRIOS:"
+    echo -e "${CYAN}Usuários cadastrados:${NC}"
     nl -w2 -s') ' $USERS 2>/dev/null || echo "Nenhum usuário."
-    read -p "Enter para voltar"
+    read -p "Enter..."
 }
 
+# ----------------- DELUSER PROFISSIONAL -----------------
 deluser() {
     clear
 
-    if [ ! -f "$USERS" ]; then
-        echo "Nenhum usuário."
-        sleep 2
-        return
-    fi
+    [ ! -f "$USERS" ] && echo "Nenhum usuário." && sleep 2 && return
 
-    echo -e "${CYAN}Selecione o usuário para remover:${NC}"
-    nl -w2 -s') ' $USERS
+    echo -e "${CYAN}Selecione o usuário:${NC}"
+    mapfile -t lista < <(cut -d'|' -f1 "$USERS")
+
+    for i in "${!lista[@]}"; do
+        echo "$((i+1))) ${lista[$i]}"
+    done
 
     read -p "Número: " num
 
-    total=$(wc -l < $USERS)
-
-    if [[ ! "$num" =~ ^[0-9]+$ ]] || [ "$num" -lt 1 ] || [ "$num" -gt "$total" ]; then
-        echo -e "${RED}Opção inválida${NC}"
+    if ! [[ "$num" =~ ^[0-9]+$ ]] || [ "$num" -lt 1 ] || [ "$num" -gt "${#lista[@]}" ]; then
+        echo -e "${RED}Inválido${NC}"
         sleep 2
         return
     fi
 
-    user=$(sed -n "${num}p" $USERS | cut -d '|' -f1)
+    user="${lista[$((num-1))]}"
+    uuid=$(grep "^$user|" "$USERS" | cut -d'|' -f2)
 
-    sed -i "${num}d" $USERS
+    grep -v "^$user|" "$USERS" > /tmp/users.tmp && mv /tmp/users.tmp "$USERS"
 
-    echo -e "${GREEN}Usuário $user removido com sucesso!${NC}"
+    jq --arg uuid "$uuid" '
+    (.inbounds[] | select(.protocol=="vless" or .protocol=="vmess") | .settings.clients)
+    |= map(select(.id != $uuid))
+    ' "$CONFIG" > /tmp/config.json && mv /tmp/config.json "$CONFIG"
+
+    systemctl restart xray
+
+    echo -e "${GREEN}Usuário removido!${NC}"
     sleep 2
 }
 
@@ -123,8 +109,8 @@ conexoes_menu() {
         clear
         echo -e "${BLUE}══════ CONEXÕES ══════${NC}"
         echo "1) Reiniciar Xray"
-        echo "5) WebSocket"
-        echo "6) SlowDNS"
+        echo "2) WebSocket"
+        echo "3) SlowDNS"
         echo "0) Voltar"
 
         read -p "Escolha: " op
@@ -135,8 +121,8 @@ conexoes_menu() {
                 echo "Reiniciado!"
                 sleep 2
                 ;;
-            5) websocket_menu ;;
-            6) slowdns_menu ;;
+            2) websocket_menu ;;
+            3) slowdns_menu ;;
             0) break ;;
         esac
     done
@@ -144,57 +130,61 @@ conexoes_menu() {
 
 # ----------------- WEBSOCKET -----------------
 websocket_menu() {
-    while true; do
-        clear
-        echo -e "${BLUE}══════ WEBSOCKET ══════${NC}"
-        echo "1) Iniciar"
-        echo "2) Parar"
-        echo "0) Voltar"
+    clear
+    read -p "Nova porta WS: " porta
 
-        read -p "Escolha: " op
+    jq ".inbounds[] |= if .tag==\"vless-ws\" then .port=$porta else . end" $CONFIG > /tmp/config.json
+    mv /tmp/config.json $CONFIG
 
-        case $op in
-            1)
-                read -p "Digite a porta: " porta
+    systemctl restart xray
 
-                check_port $porta || { sleep 2; continue; }
-
-                jq ".inbounds[] |= if (.protocol==\"vless\" or .protocol==\"vmess\") then .port=$porta else . end" $CONFIG > /tmp/config.json
-                mv /tmp/config.json $CONFIG
-
-                systemctl restart xray
-                echo -e "${GREEN}Iniciado na porta $porta${NC}"
-                sleep 2
-                ;;
-            2)
-                systemctl stop xray
-                echo "Parado"
-                sleep 2
-                ;;
-            0) break ;;
-        esac
-    done
+    echo -e "${GREEN}WebSocket na porta $porta${NC}"
+    sleep 2
 }
 
 # ----------------- SLOWDNS -----------------
 slowdns_menu() {
     clear
-    if [ ! -f /usr/local/bin/slowdns ]; then
-        echo "Instalando SlowDNS..."
-        bash <(curl -sL https://raw.githubusercontent.com/miau4/xray-manager-mult-slowdns/main/install.sh)
-    fi
-
-    echo "Abrindo menu SlowDNS..."
-    sleep 1
+    [ ! -f /usr/local/bin/slowdns ] && bash <(curl -sL https://raw.githubusercontent.com/miau4/xray-manager-mult-slowdns/main/install.sh)
     bash /usr/local/bin/slowdns
 }
 
-# ----------------- INFO -----------------
-info_servicos() {
+# ----------------- MONITOR ONLINE -----------------
+monitor_online() {
     clear
-    echo "Status:"
-    systemctl status xray | grep Active
+    echo -e "${CYAN}Usuários online:${NC}"
+    xray api statsquery --pattern "user>>>*" 2>/dev/null | grep online
+    echo ""
     read -p "Enter..."
+}
+
+# ----------------- API MENU -----------------
+api_menu() {
+    while true; do
+        clear
+        echo -e "${BLUE}══════ API ══════${NC}"
+        echo "1) Listar usuários (JSON)"
+        echo "2) IPs de usuário"
+        echo "3) Derrubar usuário"
+        echo "0) Voltar"
+
+        read -p "Escolha: " op
+
+        case $op in
+            1) $API list | jq .; read -p "Enter..." ;;
+            2)
+                read -p "Usuário: " user
+                $API ips $user
+                read -p "Enter..."
+                ;;
+            3)
+                read -p "Usuário: " user
+                $API drop $user
+                sleep 2
+                ;;
+            0) break ;;
+        esac
+    done
 }
 
 # ----------------- AUTO START -----------------
