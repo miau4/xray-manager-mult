@@ -29,16 +29,9 @@ read -p "Senha: " pass
 read -p "Dias de validade: " dias
 [[ ! "$dias" =~ ^[0-9]+$ ]] && echo "Valor inválido!" && sleep 2 && exit
 
-# 🔐 NOVO: limite de conexões
+# 🔐 limite de conexões
 read -p "Limite de IPs simultâneos (ex: 1,2,3): " limit
 [[ ! "$limit" =~ ^[0-9]+$ ]] && limit=1
-
-# 🕒 NOVO: horário permitido
-read -p "Hora início (0-23): " h_start
-read -p "Hora fim (0-23): " h_end
-
-[[ ! "$h_start" =~ ^[0-9]+$ ]] && h_start=0
-[[ ! "$h_end" =~ ^[0-9]+$ ]] && h_end=23
 
 # ----------------- GERAR -----------------
 uuid=$(uuidgen)
@@ -52,7 +45,6 @@ echo "Senha   : $pass"
 echo "UUID    : $uuid"
 echo "Validade: $exp_date"
 echo "Limite  : $limit IP(s)"
-echo "Horário : $h_start → $h_end"
 echo "═════════════════════════════"
 read -p "Confirmar? (s/n): " confirm
 
@@ -61,8 +53,8 @@ read -p "Confirmar? (s/n): " confirm
 # ----------------- SALVAR -----------------
 mkdir -p /etc/xray-manager
 
-# novo formato com limite + horário
-echo "$user|$uuid|$exp_date|$pass|$limit|$h_start|$h_end" >> $USERS
+# formato sem horário agora
+echo "$user|$uuid|$exp_date|$pass|$limit" >> $USERS
 
 # ----------------- XRAY CONFIG -----------------
 if [ -f "$CONFIG" ]; then
@@ -81,14 +73,13 @@ fi
 # ----------------- RESULTADO -----------------
 clear
 echo "══════════════════════════════"
-echo "     ✅ USUÁRIO CRIADO PRO"
+echo "     ✅ USUÁRIO CRIADO"
 echo "══════════════════════════════"
 echo "Usuário : $user"
 echo "Senha   : $pass"
 echo "UUID    : $uuid"
 echo "Expira  : $exp_date"
 echo "Limite  : $limit IP(s)"
-echo "Horário : $h_start → $h_end"
 echo "══════════════════════════════"
 
 read -n1 -r -p "Pressione qualquer tecla..."
