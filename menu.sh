@@ -35,7 +35,7 @@ port_service() {
         slowdns)
             echo "5300"
             ;;
-        * )
+        *)
             echo "-"
             ;;
     esac
@@ -73,6 +73,7 @@ users_menu() {
         echo -e "${LILAC}2) Remover usuário${NC}"
         echo -e "${LILAC}3) Lista de usuários${NC}"
         echo -e "${LILAC}4) Usuários expirados${NC}"
+        echo -e "${LILAC}5) Deletar todos os usuários${NC}"
         echo -e "${LILAC}0) Voltar${NC}"
         echo -e "${LILAC}╚════════════════════════════════╝${NC}"
         read -p "Escolha: " gu
@@ -81,6 +82,7 @@ users_menu() {
             2) deluser ;;
             3) listar_usuarios ;;
             4) usuarios_expirados ;;
+            5) del_all_users ;;
             0) break ;;
             *) echo -e "${RED}Opção inválida!${NC}" ; sleep 1 ;;
         esac
@@ -108,6 +110,17 @@ usuarios_expirados() {
         fi
     done < $USERS
     read -n1 -r -p "Pressione qualquer tecla para voltar..."
+}
+
+del_all_users() {
+    clear
+    if [ -f "$USERS" ]; then
+        > $USERS
+        echo -e "${RED}Todos os usuários foram deletados!${NC}"
+    else
+        echo "Nenhum usuário cadastrado."
+    fi
+    sleep 2
 }
 
 # ----------------- CONEXOES -----------------
