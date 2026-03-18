@@ -1,31 +1,51 @@
-
 ```bash
 #!/bin/bash
 
 clear
-echo "=== INSTALAÇÃO SLOWDNS ==="
+echo "=== SLOWDNS (MODO INDEPENDENTE) ==="
 
-read -p "IP do servidor: " SERVER
-read -p "NS (ex: ns.seudominio.com): " NS
+read -p "NameServer (ex: ns1.seudominio.com): " NS
+read -p "Chave (KEY): " KEY
+read -p "DNS (ex: 8.8.8.8): " DNS
 
-apt install wget unzip -y
+if [[ -z "$NS" || -z "$KEY" ]]; then
+  echo "Dados inválidos!"
+  exit
+fi
+
+echo "Instalando dependências..."
+apt update -y
+apt install wget curl -y
 
 mkdir -p /etc/slowdns
 cd /etc/slowdns || exit
 
-wget -O slowdns.zip https://github.com/xtaci/kcptun/releases/download/v20240101/client_linux_amd64.zip
-unzip -o slowdns.zip
-chmod +x client_linux_amd64
+echo "Baixando cliente SlowDNS..."
 
-KEY=$(openssl rand -hex 8)
+# ⚠️ TROQUE PELO BINÁRIO CORRETO QUE VOCÊ USA
+wget -O slowdns https://raw.githubusercontent.com/miau4/slowdns-bin/main/slowdns
+
+chmod +x slowdns
+
+echo "Criando configuração..."
+
+cat > /etc/slowdns/config.json <<EOF
+{
+  "key": "$KEY",
+  "ns": "$NS",
+  "dns": "$DNS"
+}
+EOF
+
+echo "Criando serviço..."
 
 cat > /etc/systemd/system/slowdns.service <<EOF
 [Unit]
-Description=SlowDNS
+Description=SlowDNS Service
 After=network.target
 
 [Service]
-ExecStart=/etc/slowdns/client_linux_amd64 -server ${SERVER}:5300 -key ${KEY} -dns ${NS} -localaddr 127.0.0.1:1080
+ExecStart=/etc/slowdns/slowdns -config /etc/slowdns/config.json
 Restart=always
 
 [Install]
@@ -34,10 +54,12 @@ EOF
 
 systemctl daemon-reload
 systemctl enable slowdns
-systemctl start slowdns
+systemctl restart slowdns
 
 echo "SLOWDNS_ATIVO=1" >> /etc/painel/data/services.conf
 
-echo "Instalado!"
+echo ""
+echo "=== SLOWDNS ATIVO ==="
+echo "NS: $NS"
 echo "KEY: $KEY"
 ```
