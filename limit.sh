@@ -7,7 +7,7 @@ BLOCKED="/etc/xray-manager/blocked.db"
 
 touch $BLOCKED
 
-echo "=== LIMITER XRAY INICIADO ==="
+echo "=== LIMITER XRAY (PRO) ==="
 
 while true; do
 
@@ -15,18 +15,24 @@ while true; do
 
     while IFS="|" read -r user uuid exp pass limit; do
 
-        # padrão caso não tenha limite
+        [[ -z "$user" ]] && continue
         [[ -z "$limit" ]] && limit=1
 
         # ===============================
-        # 🔥 PEGAR CONEXÕES ATIVAS VIA API
+        # 🔥 VERIFICA SE JÁ ESTÁ BLOQUEADO
+        # ===============================
+        if grep -q "^$user|" "$BLOCKED"; then
+            continue
+        fi
+
+        # ===============================
+        # 🔥 CONEXÕES REAIS (API)
         # ===============================
         connections=$(xray api statsquery --pattern "user>>>$user>>>online" 2>/dev/null | grep -o '[0-9]*$')
-
         [[ -z "$connections" ]] && connections=0
 
         # ===============================
-        # 🔥 PEGAR IPs RECENTES (últimos 60s)
+        # 🔥 IPs RECENTES (LOG + TEMPO REAL)
         # ===============================
         ips=$(grep "$user" $LOG | tail -n 100 | while read line; do
             log_time=$(echo "$line" | awk '{print $1" "$2}')
@@ -42,21 +48,19 @@ while true; do
         total_ips=$(echo "$ips" | grep -c .)
 
         # ===============================
+        # 🔥 DEBUG (pode remover depois)
+        # ===============================
+        echo "[$(date)] $user -> conexões=$connections / ips=$total_ips / limite=$limit"
+
+        # ===============================
         # 🔥 VERIFICA LIMITE
         # ===============================
         if [ "$connections" -gt "$limit" ] || [ "$total_ips" -gt "$limit" ]; then
 
-            echo "[$(date)] $user EXCEDEU LIMITE ($connections conexões / $total_ips IPs / limite=$limit)"
+            echo "🚫 $user EXCEDEU LIMITE!"
 
             # ===============================
-            # 🔥 EVITAR BLOQUEIO DUPLICADO
-            # ===============================
-            if grep -q "^$user|" "$BLOCKED"; then
-                continue
-            fi
-
-            # ===============================
-            # 🔥 BLOQUEIO REAL (REMOVER DO XRAY)
+            # 🔥 REMOVER DO XRAY (BLOQUEIO REAL)
             # ===============================
             jq --arg email "$user" '
             .inbounds[].settings.clients |= map(select(.email != $email))
@@ -65,11 +69,11 @@ while true; do
             systemctl restart xray
 
             # ===============================
-            # 🔥 REGISTRAR BLOQUEIO
+            # 🔥 REGISTRAR BLOQUEIO COM TEMPO
             # ===============================
-            echo "$user|$(date)" >> $BLOCKED
+            echo "$user|$NOW" >> $BLOCKED
 
-            echo "🔒 $user FOI BLOQUEADO POR COMPARTILHAMENTO"
+            echo "🔒 $user BLOQUEADO COM SUCESSO"
 
         fi
 
