@@ -1,17 +1,23 @@
 ```bash
 #!/bin/bash
 
-echo "=== ONLINE REAL (XRAY API) ==="
+echo "=============================="
+echo "   USUÁRIOS ONLINE (REAL)"
+echo "=============================="
+echo ""
 
-xray api statsquery --pattern "user>>>" 2>/dev/null | \
-grep "online" | while read line; do
+# Consulta API do Xray
+xray api statsquery --pattern "user>>>" 2>/dev/null | while read line; do
 
-    user=$(echo $line | cut -d'>' -f3)
-    status=$(echo $line | grep -o '[0-9]*$')
+    user=$(echo "$line" | cut -d'>' -f3)
+    value=$(echo "$line" | grep -o '[0-9]*$')
 
-    if [ "$status" -gt 0 ]; then
-        echo "$user - ONLINE ($status conexões)"
+    # apenas usuários com conexão ativa
+    if [[ "$value" -gt 0 ]]; then
+        echo "$user - ONLINE ($value conexões)"
     fi
 
 done
+
+echo ""
 ```
