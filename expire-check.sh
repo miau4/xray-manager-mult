@@ -1,28 +1,30 @@
 #!/bin/bash
 
-EXPDB="/etc/xray-manager/exp.db"
-USERDB="/etc/xray-manager/users.db"
-CONFIG="/etc/xray/config.json"
+USERS="/etc/xray-manager/users.xray"
 
-TODAY=$(date +%F)
+echo "Status de expiração dos usuários:"
+echo ""
 
-while IFS=: read USER DATE
-do
+[ ! -f "$USERS" ] && echo "Arquivo não encontrado!" && exit
 
-if [[ "$TODAY" > "$DATE" ]]; then
+while IFS="|" read -r name uuid exp pass limit; do
 
-UUID=$(grep $USER $USERDB | cut -d: -f2)
+    [[ -z "$name" ]] && continue
 
-jq --arg id "$UUID" '(.inbounds[0].settings.clients) |= map(select(.id != $id))' $CONFIG > /tmp/config.json
-mv /tmp/config.json $CONFIG
+    exp_ts=$(date -d "$exp" +%s 2>/dev/null)
+    now_ts=$(date +%s)
 
-sed -i "/$USER/d" $USERDB
-sed -i "/$USER/d" $EXPDB
+    if [[ -z "$exp_ts" ]]; then
+        status="Data inválida"
+    elif [[ "$exp_ts" -lt "$now_ts" ]]; then
+        status="Expirado"
+    else
+        status="Válido"
+    fi
 
-echo "Usuario $USER expirado removido"
+    echo "$name - $status - Expira em: $exp"
 
-fi
+done < "$USERS"
 
-done < $EXPDB
-
-systemctl restart xray
+echo ""
+read -n1 -r -p "Pressione qualquer tecla..."
