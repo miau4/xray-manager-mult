@@ -10,7 +10,7 @@ apt install curl wget unzip -y
 mkdir -p /etc/painel/{core,services,data}
 
 # Baixar arquivos do GitHub (ajuste seu repo)
-BASE_URL="https://raw.githubusercontent.com/miau4/xray-manager-mult/main"
+BASE_URL="https://raw.githubusercontent.com/miau4/PAINEL-NETSIMON/main"
 
 wget -O /etc/painel/menu.sh $BASE_URL/menu.sh
 wget -O /etc/painel/core/utils.sh $BASE_URL/core/utils.sh
@@ -28,6 +28,8 @@ echo "[] > /etc/painel/data/services.conf" > /dev/null
 # ===============================
 
 echo "Instalando API..."
+
+mkdir -p /etc/xray-manager
 
 wget -O /etc/xray-manager/api.sh https://raw.githubusercontent.com/miau4/PAINEL-NETSIMON/main/api.sh
 
