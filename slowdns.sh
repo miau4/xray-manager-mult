@@ -1,5 +1,5 @@
 #!/bin/bash
-# Menu SlowDNS Manager integrado ao Xray-Manager-Mult
+# Menu SlowDNS Manager integrado ao PAINEL-NETSIMON
 clear
 SLOWDNS_DIR="/etc/slowdns"
 

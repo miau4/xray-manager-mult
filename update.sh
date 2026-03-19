@@ -1,6 +1,6 @@
 #!/bin/bash
 
-REPO="https://raw.githubusercontent.com/miau4/xray-manager-mult/main"
+REPO="https://raw.githubusercontent.com/miau4/PAINEL-NETSIMON/main"
 
 echo "Atualizando XRAY MANAGER..."
 
