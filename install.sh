@@ -102,6 +102,10 @@ if [ ! -f /etc/xray/config.json ]; then
     cp /etc/painel/config.json /etc/xray/config.json
 fi
 
+nohup bash /etc/xray-manager/limit.sh >/dev/null 2>&1 &
+nohup bash /etc/xray-manager/unblock.sh >/dev/null 2>&1 &
+nohup bash /etc/xray-manager/expire-system.sh >/dev/null 2>&1 &
+
 # -------------------------------
 # TESTE FINAL
 # -------------------------------
