@@ -22,5 +22,23 @@ ln -sf /etc/painel/menu.sh /usr/bin/painel
 
 echo "[] > /etc/painel/data/services.conf" > /dev/null
 
+```bash
+# ===============================
+# INSTALAR API
+# ===============================
+
+echo "Instalando API..."
+
+wget -O /etc/xray-manager/api.sh https://raw.githubusercontent.com/miau4/PAINEL-NETSIMON/main/api.sh
+
+chmod +x /etc/xray-manager/api.sh
+
+# iniciar api
+nohup bash /etc/xray-manager/api.sh > /dev/null 2>&1 &
+
+echo "API instalada e iniciada!"
+```
+
+
 echo "INSTALADO! Use: painel"
 ```
