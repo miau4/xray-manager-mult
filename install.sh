@@ -1,10 +1,10 @@
 #!/bin/bash
 
 clear
-echo "=== INSTALANDO NETSIMON PANEL (MODULAR) ==="
+echo "=== INSTALANDO PAINEL BASE ==="
 
 # -------------------------------
-# VERIFICA ROOT
+# VERIFICAR ROOT
 # -------------------------------
 if [ "$EUID" -ne 0 ]; then
     echo "Execute como root!"
@@ -12,39 +12,39 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 # -------------------------------
-# CORRIGIR POSSÍVEL CRLF
+# CORRIGIR QUEBRA DE LINHA (CRLF)
 # -------------------------------
 sed -i 's/\r$//' "$0" 2>/dev/null
 
 # -------------------------------
-# DEPENDÊNCIAS
+# ATUALIZAR E INSTALAR DEPENDÊNCIAS
 # -------------------------------
-echo "[+] Instalando dependências..."
-apt-get update -y >/dev/null 2>&1
-apt-get install -y curl wget unzip jq >/dev/null 2>&1
+apt update -y
+apt install -y curl wget unzip jq
 
 # -------------------------------
-# ESTRUTURA
+# CRIAR ESTRUTURA
 # -------------------------------
-echo "[+] Criando estrutura..."
 mkdir -p /etc/painel/{core,services,data}
 mkdir -p /etc/xray-manager
 
 # -------------------------------
-# BASE URL
+# BASE DO GITHUB
 # -------------------------------
 BASE_URL="https://raw.githubusercontent.com/miau4/PAINEL-NETSIMON/main"
 
 # -------------------------------
 # BAIXAR ARQUIVOS PRINCIPAIS
 # -------------------------------
-echo "[+] Baixando arquivos do painel..."
-
+echo "[+] Baixando menu..."
 wget -q -O /etc/painel/menu.sh $BASE_URL/menu.sh
+
+echo "[+] Baixando config..."
 wget -q -O /etc/painel/config.json $BASE_URL/config.json
 
 # -------------------------------
-# BAIXAR SCRIPTS (CORE/SERVICES)
+# BAIXAR TODOS OS SCRIPTS
+# (MESMA LÓGICA DO SEU PROJETO)
 # -------------------------------
 echo "[+] Baixando módulos..."
 
@@ -77,43 +77,39 @@ for file in "${FILES[@]}"; do
 done
 
 # -------------------------------
-# BANCO DE DADOS
+# GARANTIR BASE DE DADOS
 # -------------------------------
-echo "[+] Criando base de dados..."
 touch /etc/xray-manager/users.xray
 touch /etc/xray-manager/blocked.db
 
 # -------------------------------
 # PERMISSÕES
 # -------------------------------
-echo "[+] Ajustando permissões..."
 chmod -R +x /etc/painel
 
 # -------------------------------
 # COMANDO GLOBAL
 # -------------------------------
-echo "[+] Criando comando global..."
 ln -sf /etc/painel/menu.sh /usr/local/bin/menu
 chmod +x /usr/local/bin/menu
 
 # -------------------------------
-# TESTE REAL DO MENU
+# GARANTIR XRAY CONFIG
 # -------------------------------
-echo "[+] Testando menu..."
-
-if bash /etc/painel/menu.sh; then
-    echo "[OK] Menu funcionando!"
-else
-    echo "[ERRO] Menu com problema interno"
+if [ ! -f /etc/xray/config.json ]; then
+    echo "[+] Criando config do Xray..."
+    mkdir -p /etc/xray
+    cp /etc/painel/config.json /etc/xray/config.json
 fi
 
 # -------------------------------
-# FINAL
+# TESTE FINAL
 # -------------------------------
-clear
-echo "===================================="
-echo " INSTALAÇÃO CONCLUÍDA"
-echo "===================================="
+echo "[+] Testando menu..."
+bash /etc/painel/menu.sh
+
 echo ""
-echo "Digite: menu"
-echo ""
+echo "===================================="
+echo " INSTALAÇÃO FINALIZADA"
+echo "===================================="
+echo "Use: menu"
