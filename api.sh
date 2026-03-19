@@ -2,7 +2,7 @@
 #!/bin/bash
 
 PORT=8081
-TOKEN="CHANGE_ME_TOKEN"
+TOKEN="6962869d452ff246990161cd178e2c29"
 
 USERS="/etc/xray-manager/users.xray"
 CONFIG="/etc/xray/config.json"
