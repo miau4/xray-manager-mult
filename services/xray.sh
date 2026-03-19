@@ -1,19 +1,36 @@
-```bash
 #!/bin/bash
 
 clear
-echo "=== XRAY MODO TUNEL (VLESS) ==="
 
-read -p "Endereço (ex: m.ofertas.tim.com.br): " ADDRESS
-read -p "Porta (ex: 443): " PORT
+while true; do
+echo "======================================="
+echo "           XRAY MANAGER"
+echo "======================================="
+echo "1) Instalar Xray (VLESS)"
+echo "2) Reiniciar Xray"
+echo "3) Status"
+echo "4) Remover Xray"
+echo "0) Voltar"
+echo "======================================="
+read -p "Escolha: " op
+
+case $op in
+
+1)
+clear
+echo "=== XRAY VLESS TUNEL ==="
+
+read -p "Address: " ADDRESS
+read -p "Porta: " PORT
 read -p "UUID: " UUID
-read -p "SNI (ex: www.tim.com.br): " SNI
-read -p "Host (ex: azion): " HOST
-read -p "Path (ex: /): " PATH
+read -p "SNI: " SNI
+read -p "Host: " HOST
+read -p "Path: " PATH
 
 if [[ -z "$ADDRESS" || -z "$PORT" || -z "$UUID" ]]; then
   echo "Dados inválidos!"
-  exit
+  read -p "Enter..."
+  continue
 fi
 
 apt install curl -y
@@ -29,7 +46,6 @@ cat > /etc/xray/config.json <<EOF
   },
   "inbounds": [
     {
-      "tag": "socks",
       "port": 10808,
       "protocol": "socks",
       "settings": {
@@ -40,7 +56,6 @@ cat > /etc/xray/config.json <<EOF
   ],
   "outbounds": [
     {
-      "tag": "proxy",
       "protocol": "vless",
       "settings": {
         "vnext": [
@@ -68,14 +83,6 @@ cat > /etc/xray/config.json <<EOF
           "allowInsecure": true
         }
       }
-    },
-    {
-      "tag": "direct",
-      "protocol": "freedom"
-    },
-    {
-      "tag": "block",
-      "protocol": "blackhole"
     }
   ]
 }
@@ -83,8 +90,42 @@ EOF
 
 systemctl restart xray
 
-echo "XRAY_TUNEL=1" >> /etc/painel/data/services.conf
+LINK="vless://${UUID}@${ADDRESS}:${PORT}?encryption=none&type=xhttp&security=tls&sni=${SNI}&host=${HOST}&path=${PATH}#NETSIMON"
 
 echo ""
-echo "XRAY ATIVO NA PORTA 10808"
-```
+echo "XRAY ATIVO!"
+echo "LINK GERADO:"
+echo "$LINK"
+
+read -p "Enter..."
+;;
+
+2)
+systemctl restart xray
+echo "Reiniciado!"
+read -p "Enter..."
+;;
+
+3)
+systemctl status xray --no-pager
+read -p "Enter..."
+;;
+
+4)
+systemctl stop xray
+apt remove xray -y
+rm -rf /etc/xray
+echo "Removido!"
+read -p "Enter..."
+;;
+
+0)
+break
+;;
+
+*)
+echo "Opção inválida!"
+;;
+
+esac
+done
