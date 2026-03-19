@@ -6,8 +6,8 @@ echo "=== INSTALANDO NETSIMON PANEL ==="
 # ===============================
 # DEPENDÊNCIAS
 # ===============================
-apt update -y
-apt install curl wget unzip jq -y
+apt-get update -y
+apt-get install -y curl wget unzip jq
 
 # ===============================
 # PASTAS
